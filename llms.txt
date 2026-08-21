@@ -1,0 +1,104 @@
+# quality-ledger
+
+Install:
+
+```
+composer require rasuvaeff/quality-ledger
+```
+
+## Rules
+
+- PHP 8.3+, `declare(strict_types=1)`, `final readonly class` throughout.
+- Framework- and domain-agnostic: the package knows nothing about mutation
+  testing, flaky tests, or any specific analyzer. You supply `Datum`,
+  `RunReport`, a `StableIdInterface`, and (for `diff()`) an `$isBad` closure
+  that classifies your own domain's status strings.
+- `Ledger::append()` on the same `$report->run` twice is a no-op — safe to
+  call from a retried CI step.
+- `Ledger::diff($scope, $base, $head, $isBad)` classifies every id observed
+  at `$base` and/or `$head` into exactly one bucket: `newBad`, `fixed`,
+  `stillBad` (with `ageRuns`), or a rolled-up `unchangedCount`. Use
+  `RatchetGate` to fail a build only on `newBad` — never on background
+  `stillBad` debt an unrelated change did not introduce.
+- `diff()` is directional: it reports the change from `$base` to `$head` and
+  does not sort them, so the older run must be `$base`. An id that is in the
+  ledger but observed at neither point (first seen later, or gone before both)
+  is in no bucket at all and is not counted by `totalIdsCompared()`.
+- `RetentionPolicy(tombstoneTtlRuns: 50)` — the third, optional `Ledger`
+  constructor argument. Drops an id once it has been absent for more than that
+  many runs; an id still being observed is never pruned. Pass a smaller value
+  for a fast-churning codebase, `0` to drop a dead id one run after it
+  disappears. A negative value throws.
+- `StableIdInterface::id(Datum): non-empty-string` is the extension point:
+  it decides what counts as "the same observation" across runs. `DefaultStableId`
+  is `sha256(kind . "\0" . signature)`. Any non-empty string works, digits
+  included; returning `''` throws.
+- `Datum` and `RunReport` validate in their constructors — empty `kind`,
+  `signature`, `status`, `run`, `scope` or metric name throws
+  `InvalidArgumentException`.
+- `append()` is a read-modify-write over the whole scope and is NOT
+  concurrency-safe: two jobs appending to one scope at once silently lose a
+  run. One writer per scope. A malformed storage file throws `RuntimeException`
+  naming the offending field.
+- `StoragePort` is byte-oriented (`read(scope): ?string` /
+  `write(scope, bytes): void`) — implement it for S3, a CI cache, anything;
+  you never touch the package's internal representation.
+- Timestamps and run identifiers are always supplied by the caller — the
+  engine never calls `time()` or a VCS. Deterministic to test.
+
+## Result types
+
+- `DiffReport`: `base`, `head`, `newBad: list<DiffEntry>`, `fixed: list<DiffEntry>`,
+  `stillBad: list<StillBadEntry>`, `unchangedCount: int`, `totalIdsCompared(): int`.
+- `DiffEntry`: `id`, `kind`, `meta` (as of `head` when present there, else `base`).
+- `StillBadEntry`: `id`, `kind`, `meta`, `ageRuns` (runs continuously bad).
+- `GateResult`: `ok: bool`, `regressions: list<DiffEntry>` — from `RatchetGate::evaluate()`.
+- `Trend`: `metric`, `points: list<TrendPoint>` (oldest first; runs missing the
+  metric are skipped, not zero-filled). `TrendPoint`: `run`, `ts`, `value: int|float`.
+
+## API
+
+```php
+use Rasuvaeff\QualityLedger\Datum;
+use Rasuvaeff\QualityLedger\DefaultStableId;
+use Rasuvaeff\QualityLedger\Ledger;
+use Rasuvaeff\QualityLedger\LocalFileStorage;
+use Rasuvaeff\QualityLedger\RatchetGate;
+use Rasuvaeff\QualityLedger\RetentionPolicy;
+use Rasuvaeff\QualityLedger\RunReport;
+
+$ledger = new Ledger(
+    id: new DefaultStableId(),
+    storage: new LocalFileStorage(__DIR__ . '/build/quality-ledger'),
+    retention: new RetentionPolicy(tombstoneTtlRuns: 50),
+);
+
+// One datum per observation; $status is your own vocabulary.
+$ledger->append(new RunReport(
+    run: 'abc123',
+    ts: 1_700_000_000,
+    scope: 'acme/widgets',
+    data: [
+        new Datum(kind: 'mutant', signature: 'src/Foo.php:12:TrueValue', status: 'killed'),
+        new Datum(kind: 'mutant', signature: 'src/Foo.php:20:FalseValue', status: 'escaped', meta: ['file' => 'src/Foo.php', 'line' => 20]),
+    ],
+    metrics: ['msi' => 91.4],
+));
+
+$isBad = static fn(string $status): bool => $status === 'escaped';
+
+$diff = $ledger->diff(scope: 'acme/widgets', base: 'prev-sha', head: 'abc123', isBad: $isBad);
+$gate = (new RatchetGate())->evaluate($diff);
+
+if (!$gate->ok) {
+    foreach ($gate->regressions as $entry) {
+        echo $entry->id, ' ', $entry->kind, "\n";
+    }
+    exit(1);
+}
+
+$trend = $ledger->trend(scope: 'acme/widgets', metric: 'msi', window: 30);
+foreach ($trend->points as $point) {
+    echo $point->run, ' ', $point->value, "\n";
+}
+```
