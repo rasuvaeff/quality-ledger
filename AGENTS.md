@@ -11,7 +11,8 @@ runs (`newBad`/`fixed`/`stillBad`), and a `RatchetGate` that fails only on a
 genuinely new regression. Public namespace `Rasuvaeff\QualityLedger`
 (`Ledger`, `Datum`, `RunReport`, `StableIdInterface`/`DefaultStableId`,
 `StoragePort`/`LocalFileStorage`, `RetentionPolicy`, `DiffReport`/`DiffEntry`/
-`StillBadEntry`, `RatchetGate`, `Trend`/`TrendPoint`); `@internal` under
+`StillBadEntry`, `RatchetGate`, `Trend`/`TrendPoint`, and the badge output
+port `Badge`/`BadgeColor`/`BadgeRenderer`/`BadgeSvg`); `@internal` under
 `Rasuvaeff\QualityLedger\Internal` (`LedgerState`, `Transition`, `RunRecord`,
 `AbsentStatus`, `Codec`).
 
