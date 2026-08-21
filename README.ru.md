@@ -34,7 +34,7 @@ diff между любыми двумя записанными прогонам�
 
 ## Требования
 
-- PHP 8.3+
+- PHP 8.3–8.5
 - Нет runtime-зависимостей
 
 ## Установка
@@ -156,7 +156,7 @@ interface StableIdInterface
 | `StillBadEntry` | те же три плюс `ageRuns`: сколько прогонов id непрерывно «плохой» |
 | `GateResult` | `ok: bool`, `regressions: list<DiffEntry>` (возвращает `RatchetGate::evaluate()`) |
 | `Trend` | `metric`, `points: list<TrendPoint>`, от старых к новым |
-| `TrendPoint` | `run`, `ts`, `value: int|float` |
+| `TrendPoint` | `run`, `ts`, `value: int\|float` |
 
 Прогон без запрошенной метрики в `Trend` пропускается, а не заполняется нулём.
 

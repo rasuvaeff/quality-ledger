@@ -18,7 +18,7 @@ use Rasuvaeff\QualityLedger\Internal\Assert;
 final readonly class Datum
 {
     /**
-     * @param non-empty-string $kind Domain tag ('mutant', 'flaky', 'doc-block', ...) — informational, not used for id.
+     * @param non-empty-string $kind Domain tag ('mutant', 'flaky', 'doc-block', ...) — never interpreted by the ledger itself; {@see DefaultStableId} does hash it into the id.
      * @param non-empty-string $signature Raw material for {@see StableIdInterface::id()}.
      * @param non-empty-string $status Domain-defined ('killed', 'escaped', 'flaky', ...); {@see DiffReport} only needs a caller-supplied predicate for "bad".
      * @param array<string, mixed> $meta Arbitrary domain payload (file, line, killer, ...), carried through untouched.

@@ -28,15 +28,16 @@ engine, not a fork of it.
 repository invents the version `0.1.0` to satisfy it. A path repository always
 satisfies its own constraint, so a first tag of `0.2.0` or `1.0.0` would break
 that package only once it is installed from Packagist — long after the choice
-was made. Nothing is published yet: no tag, no Packagist entry, and
-`CHANGELOG.md` correctly sits at `## Unreleased` (the release PR is what turns
-that heading into `## 0.1.0 — <date>`, which the bc-check tolerance step
-reads).
+was made. `CHANGELOG.md`'s top heading is therefore `## 0.1.0 — <date>`, not
+`## Unreleased`: the bc-check tolerance step reads that heading, and a release
+PR is what stamps the date onto it.
 
-Until the first tag the on-disk format may still change freely — that is why
+The on-disk format was free to change up to that first tag — that is why
 `FORMAT_VERSION` is already `2` while the package is at `0.1.0`: the layout was
 reworked before release, and the version field has to detect a file written by
-the earlier one rather than let a structural check trip over it.
+the earlier one rather than let a structural check trip over it. From the tag
+on it is a published contract: a further change bumps `FORMAT_VERSION` and
+refuses the older file by version, as version 2 already does with version 1.
 
 ## Golden rules
 
@@ -96,7 +97,7 @@ prebuilt `composer-apcu-pcov-redis:local`-style image (see the monorepo's
   `Codec::decode()` on the way in from disk). Verified by literally applying
   each mutation and running `composer test` before accepting; don't
   re-litigate without doing the same. **These four are the entire gap between
-  the 98.65% the suite scores and 100** — `minMsi` is 98, and it is honest:
+  the 98.69% the suite scores and 100** — `minMsi` is 98, and it is honest:
   every `src/` class is named in some test class's `#[Covers]`, so every one
   of them generates mutants.
 - **The mutation gate is `#[Covers]`-scoped, and that is a trap.** Testo maps

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rasuvaeff\QualityLedger\Tests;
 
 use Rasuvaeff\QualityLedger\Datum;
+use Rasuvaeff\QualityLedger\Internal\Assert as Guard;
 use Rasuvaeff\QualityLedger\RunReport;
 use Testo\Assert;
 use Testo\Codecov\Covers;
@@ -12,6 +13,7 @@ use Testo\Test;
 
 #[Test]
 #[Covers(RunReport::class)]
+#[Covers(Guard::class)]
 final class RunReportTest
 {
     public function aFullyPopulatedReportIsAccepted(): void
@@ -51,6 +53,20 @@ final class RunReportTest
         $this->assertRejected(
             static fn(): RunReport => new RunReport(run: 'r1', ts: 0, scope: 's', data: [], metrics: ['' => 1]),
             'metric name must not be empty',
+        );
+    }
+
+    /**
+     * PHP stores `['1' => 1]` under the *integer* key `1`, so a metric name a
+     * caller wrote as a decimal string never reaches an emptiness check as a
+     * string at all — and `metrics` is annotated `array<non-empty-string, …>`.
+     * Rejected rather than quietly re-typed.
+     */
+    public function aDecimalStringMetricNameIsRejected(): void
+    {
+        $this->assertRejected(
+            static fn(): RunReport => new RunReport(run: 'r1', ts: 0, scope: 's', data: [], metrics: ['1' => 1]),
+            'metric name must be a string',
         );
     }
 

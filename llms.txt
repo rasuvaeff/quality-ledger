@@ -8,7 +8,7 @@ composer require rasuvaeff/quality-ledger
 
 ## Rules
 
-- PHP 8.3+, `declare(strict_types=1)`, `final readonly class` throughout.
+- PHP 8.3–8.5, `declare(strict_types=1)`, `final readonly class` throughout.
 - Framework- and domain-agnostic: the package knows nothing about mutation
   testing, flaky tests, or any specific analyzer. You supply `Datum`,
   `RunReport`, a `StableIdInterface`, and (for `diff()`) an `$isBad` closure

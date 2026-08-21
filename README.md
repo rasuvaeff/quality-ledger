@@ -34,7 +34,7 @@ up to the caller.
 
 ## Requirements
 
-- PHP 8.3+
+- PHP 8.3–8.5
 - No runtime dependencies
 
 ## Installation
@@ -157,7 +157,7 @@ Everything a call hands back, all plain readonly value objects:
 | `StillBadEntry` | the same three, plus `ageRuns`: how many runs the id has been continuously bad |
 | `GateResult` | `ok: bool`, `regressions: list<DiffEntry>` (returned by `RatchetGate::evaluate()`) |
 | `Trend` | `metric`, `points: list<TrendPoint>`, oldest first |
-| `TrendPoint` | `run`, `ts`, `value: int|float` |
+| `TrendPoint` | `run`, `ts`, `value: int\|float` |
 
 A run missing the requested metric is skipped in a `Trend`, not zero-filled.
 

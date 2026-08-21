@@ -200,6 +200,10 @@ final readonly class Ledger
     }
 
     /**
+     * An empty `$metric` is rejected by {@see Trend} rather than answered with
+     * an empty trend — a metric name no run can carry is a caller bug, not a
+     * metric nobody recorded.
+     *
      * @param non-empty-string $scope
      * @param non-empty-string $metric
      * @param ?int $window Keep only the most recent `$window` runs (must not be negative); `null` (default) keeps all of them. `0` yields an empty trend rather than "no limit" — that reading of a zero window is more useful and less surprising than a silent no-op.

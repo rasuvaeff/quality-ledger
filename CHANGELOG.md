@@ -35,7 +35,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Datum` and `RunReport` validate their inputs: empty `kind`, `signature`,
   `status`, `run`, `scope` or metric name now throws `InvalidArgumentException`,
   as does an `append()` whose id function returns an empty string. `Datum`
-  also rejects the ledger's internal absent sentinel as a domain status.
+  also rejects the ledger's internal absent sentinel as a domain status, and a
+  metric name PHP would store as an integer array key (`'1'`) is rejected
+  rather than silently re-typed. `Trend` enforces the same non-empty contract
+  on its own `metric`, so `Ledger::trend($scope, '')` throws instead of
+  answering with an empty trend.
 - `LocalFileStorage::write()` reports a directory it cannot create instead of
   misattributing the failure to the temp file two steps later.
 - `Ledger::append()` is no longer quadratic in the number of ids: the

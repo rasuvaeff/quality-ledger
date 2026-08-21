@@ -42,6 +42,14 @@ final readonly class Assert
     public static function nonEmptyKeys(array $values, string $name): void
     {
         foreach (array_keys($values) as $key) {
+            // PHP turns a decimal-string key into an int, so `['1' => ...]`
+            // reaches here as `1` and would otherwise pass a check that only
+            // looks for the empty string — while the assertion above promises
+            // every key is a non-empty *string*.
+            if (!is_string($key)) {
+                throw new \InvalidArgumentException($name . ' must be a string');
+            }
+
             if ($key === '') {
                 throw new \InvalidArgumentException($name . ' must not be empty');
             }
