@@ -175,6 +175,48 @@ void` — реализуйте под S3, CI-кэш, что угодно. Вст
 удалённый мутант или тест. id, который присутствует или сейчас «плохой»,
 никогда не прунится независимо от этой настройки.
 
+### Бейджи
+
+Число прогона — половина того, что показывает README; вторая половина —
+бейдж. `Badge` — это то, **что** написано на бейдже (label, message, цвет из
+шестиступенчатой палитры shields.io), а `BadgeSvg` превращает его в
+самодостаточный SVG. Внешний сервис не участвует: файл и есть весь артефакт,
+поэтому он работает и на офлайн-раннере, и внутри закрытой сети.
+
+```php doc-exec
+use Rasuvaeff\QualityLedger\Badge;
+use Rasuvaeff\QualityLedger\BadgeSvg;
+use Rasuvaeff\QualityLedger\Trend;
+use Rasuvaeff\QualityLedger\TrendPoint;
+
+$msi = new Trend('msi', [new TrendPoint(run: 'run-2', ts: 1_700_003_600, value: 98.65)]);
+$badge = Badge::fromTrend($msi);
+
+$badge->label;        // => 'msi'
+$badge->message;      // => '98.7%'
+$badge->color->value; // => 'brightgreen'
+
+$svg = (new BadgeSvg())->render($badge);
+
+str_starts_with($svg, '<svg xmlns="http://www.w3.org/2000/svg"'); // => true
+str_contains($svg, '>98.7%<');                                    // => true
+```
+
+Запишите `$svg` туда, откуда его достанет README — ветка Pages, ассет
+релиза, артефакт — и сошлитесь `<img>`. В CI это обычно делается сразу после
+записи прогона:
+
+```bash
+mkdir -p build && php bin/render-badge.php > build/msi.svg
+```
+
+| Тип | Что это |
+|---|---|
+| `Badge` | `label`, `message`, `color`; `Badge::forPercentage()` печатает один знак после запятой и красит по привычным порогам, `Badge::fromTrend()` берёт последнюю точку тренда (пустой тренд — `n/a` красным) |
+| `BadgeColor` | `BrightGreen` ≥ 95, `Green` ≥ 90, `YellowGreen` ≥ 75, `Yellow` ≥ 60, `Orange` ≥ 40, ниже — `Red`; `hex()` даёт цвет shields.io |
+| `BadgeRenderer` | Порт: `render(Badge): string`. Реализуйте его для endpoint-документа shields.io, PNG или строки в терминале |
+| `BadgeSvg` | Поставляемая реализация: flat-стиль, высота 20px, ширина текста считается по 6.6px на символ |
+
 ## Безопасность
 
 Движок не читает окружение и не зовёт часы или VCS — каждый идентификатор и

@@ -86,7 +86,15 @@ prebuilt `composer-apcu-pcov-redis:local`-style image (see the monorepo's
   dropped and not left at its last status.** See the class docblock — this
   is what lets `diff()` classify "removed from the code, no longer
   applicable" as `fixed` rather than a permanent `stillBad`.
-- **Four mutation-tested equivalent mutants are documented in place, not
+- **The rendered badge document is pinned byte for byte**
+  (`BadgeSvgTest::theRenderedDocumentIsPinned`, plus a second differently
+  sized badge). Every coordinate in it is derived arithmetic — text is
+  anchored at the middle of its half at ten times the scale — and structural
+  assertions cannot tell a correct multiplier from a wrong one: the document
+  still parses, the label just sits outside its own box. Nineteen mutants
+  lived in exactly that gap before the pin. Update the string deliberately
+  when the geometry changes; do not relax it to `str_contains()`.
+- **Six mutation-tested equivalent mutants are documented in place, not
   chased with contrived tests:** `LocalFileStorage::read()`'s early `return
   null` (removing it still returns `null` via the `file_get_contents() ===
   false` fallthrough), `Ledger::ageAt()`'s `>` boundary check and `max(0,
@@ -96,8 +104,13 @@ prebuilt `composer-apcu-pcov-redis:local`-style image (see the monorepo's
   `runIndex` — appended in run order, and validated strictly ascending by
   `Codec::decode()` on the way in from disk). Verified by literally applying
   each mutation and running `composer test` before accepting; don't
-  re-litigate without doing the same. **These four are the entire gap between
-  the 98.69% the suite scores and 100** — `minMsi` is 98, and it is honest:
+  re-litigate without doing the same. Two more joined them with the badge
+  code: `BadgeColor::forPercentage()`'s `max(0.0, …)` clamp (the mutation to
+  `max(1.0, …)` cannot change a step — the lowest one starts at 40), and the
+  `(float)` cast in `BadgeSvg::textWidth()` (PHP promotes the int anyway; the
+  cast is there because Psalm runs in strict-binary-operands mode).
+  **These six are the entire gap between the 98.4% the suite scores and
+  100** — `minMsi` is 98, and it is honest:
   every `src/` class is named in some test class's `#[Covers]`, so every one
   of them generates mutants.
 - **The mutation gate is `#[Covers]`-scoped, and that is a trap.** Testo maps
