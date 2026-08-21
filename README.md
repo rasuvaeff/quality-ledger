@@ -176,6 +176,48 @@ codebase does not grow one dead row per mutant or test ever removed. An id
 that is present, or currently bad, is never pruned regardless of this
 setting.
 
+### Badges
+
+A run's number is only half the story a README shows; the other half is a
+badge. `Badge` is what a badge says — a label, a message, a colour from the
+six-step shields.io palette — and `BadgeSvg` turns one into a self-contained
+SVG. No external service is involved: the file is the whole artifact, so it
+also works on an offline runner or inside a private network.
+
+```php doc-exec
+use Rasuvaeff\QualityLedger\Badge;
+use Rasuvaeff\QualityLedger\BadgeSvg;
+use Rasuvaeff\QualityLedger\Trend;
+use Rasuvaeff\QualityLedger\TrendPoint;
+
+$msi = new Trend('msi', [new TrendPoint(run: 'run-2', ts: 1_700_003_600, value: 98.65)]);
+$badge = Badge::fromTrend($msi);
+
+$badge->label;        // => 'msi'
+$badge->message;      // => '98.7%'
+$badge->color->value; // => 'brightgreen'
+
+$svg = (new BadgeSvg())->render($badge);
+
+str_starts_with($svg, '<svg xmlns="http://www.w3.org/2000/svg"'); // => true
+str_contains($svg, '>98.7%<');                                    // => true
+```
+
+Write `$svg` wherever the README that shows it can reach — a Pages branch, a
+release asset, an artifact — and point an `<img>` at it. A CI job usually
+does this right after recording the run:
+
+```bash
+mkdir -p build && php bin/render-badge.php > build/msi.svg
+```
+
+| Type | Is |
+|---|---|
+| `Badge` | `label`, `message`, `color`; `Badge::forPercentage()` formats one decimal and colours by the usual thresholds, `Badge::fromTrend()` takes a trend's most recent point (an empty trend is `n/a` in red) |
+| `BadgeColor` | `BrightGreen` ≥ 95, `Green` ≥ 90, `YellowGreen` ≥ 75, `Yellow` ≥ 60, `Orange` ≥ 40, `Red` below; `hex()` gives the shields.io colour |
+| `BadgeRenderer` | The port: `render(Badge): string`. Implement it for a shields.io endpoint document, a PNG or a terminal line |
+| `BadgeSvg` | The shipped implementation: flat style, 20px tall, text width approximated at 6.6px per character |
+
 ## Security
 
 The engine reads no environment and calls no clock or VCS — every

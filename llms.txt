@@ -56,6 +56,32 @@ composer require rasuvaeff/quality-ledger
 - `Trend`: `metric`, `points: list<TrendPoint>` (oldest first; runs missing the
   metric are skipped, not zero-filled). `TrendPoint`: `run`, `ts`, `value: int|float`.
 
+## Badges
+
+`Badge` (label + message + colour) and `BadgeSvg` (self-contained flat SVG,
+no external service). `BadgeRenderer` is the port — implement it for a
+shields.io endpoint document or any other target.
+
+```php
+use Rasuvaeff\QualityLedger\Badge;
+use Rasuvaeff\QualityLedger\BadgeSvg;
+
+$badge = Badge::fromTrend($ledger->trend(scope: 'acme/widgets', metric: 'msi'));
+// or: Badge::forPercentage('msi', 98.65) / new Badge('msi', '98.7%', BadgeColor::BrightGreen)
+
+file_put_contents('build/msi.svg', (new BadgeSvg())->render($badge));
+```
+
+- `Badge::forPercentage()` formats one decimal (`98.65` -> `98.7%`) and
+  colours by shields' thresholds: >= 95 brightgreen, >= 90 green, >= 75
+  yellowgreen, >= 60 yellow, >= 40 orange, else red. Out-of-range values are
+  clamped, not refused.
+- `Badge::fromTrend()` reads the trend's most recent point; an empty trend
+  renders `n/a` in red rather than throwing.
+- `BadgeSvg` escapes label and message as XML text, counts characters (not
+  bytes) for width, and is deterministic — the same badge renders the same
+  bytes.
+
 ## API
 
 ```php
