@@ -566,4 +566,34 @@ final class LedgerTest
         yield 'gone at head' => [[['b', 'b', null]]];
         yield 'absent at base but back at head' => [[['b', null, 'b']]];
     }
+
+    public function diffingAnUnknownBaseRunIsRejected(): void
+    {
+        $this->ledger->append($this->report('r1', [$this->datum('x', 'good')]));
+
+        try {
+            $this->ledger->diff(self::SCOPE, 'nope', 'r1', $this->isBad);
+
+            Assert::fail('expected an InvalidArgumentException');
+        } catch (\InvalidArgumentException $e) {
+            Assert::same($e->getMessage(), 'Unknown run "nope" for scope "' . self::SCOPE . '"');
+        }
+    }
+
+    /**
+     * A run recorded after `$head` must not leak into the age of an id: the
+     * walk skips transitions newer than the head and counts from the ones at
+     * or before it.
+     */
+    public function ageRunsIgnoresTransitionsRecordedAfterTheHead(): void
+    {
+        $this->ledger->append($this->report('r1', [$this->datum('x', 'bad')]));
+        $this->ledger->append($this->report('r2', [$this->datum('x', 'bad')]));
+        $this->ledger->append($this->report('r3', [$this->datum('x', 'good')]));
+
+        $diff = $this->ledger->diff(self::SCOPE, 'r1', 'r2', $this->isBad);
+
+        Assert::same(\count($diff->stillBad), 1);
+        Assert::same($diff->stillBad[0]->ageRuns, 1);
+    }
 }
