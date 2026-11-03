@@ -25,6 +25,7 @@ final readonly class BadgeSvg implements BadgeRenderer
     private const int HEIGHT = 20;
     private const float CHAR_WIDTH = 6.6;
     private const float SIDE_PADDING = 10.0;
+    private const string TEMPLATE = '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" role="img" aria-label="%s: %s"><title>%s: %s</title><linearGradient id="s" x2="0" y2="100%%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient><clipPath id="r"><rect width="%d" height="%d" rx="3" fill="#fff"/></clipPath><g clip-path="url(#r)"><rect width="%d" height="%d" fill="#555"/><rect x="%d" width="%d" height="%d" fill="%s"/><rect width="%d" height="%d" fill="url(#s)"/></g><g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,Geneva,sans-serif" font-size="110" text-rendering="geometricPrecision"><text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">%s</text><text x="%d" y="140" transform="scale(.1)">%s</text><text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">%s</text><text x="%d" y="140" transform="scale(.1)">%s</text></g></svg>';
 
     #[\Override]
     public function render(Badge $badge): string
@@ -41,22 +42,7 @@ final readonly class BadgeSvg implements BadgeRenderer
         // integral at the scale the font hinting works at, instead of
         // rounding a fractional x down to a visibly off-centre label.
         return \sprintf(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="%d" height="%d" role="img" aria-label="%s: %s">'
-            . '<title>%s: %s</title>'
-            . '<linearGradient id="s" x2="0" y2="100%%"><stop offset="0" stop-color="#bbb" stop-opacity=".1"/><stop offset="1" stop-opacity=".1"/></linearGradient>'
-            . '<clipPath id="r"><rect width="%d" height="%d" rx="3" fill="#fff"/></clipPath>'
-            . '<g clip-path="url(#r)">'
-            . '<rect width="%d" height="%d" fill="#555"/>'
-            . '<rect x="%d" width="%d" height="%d" fill="%s"/>'
-            . '<rect width="%d" height="%d" fill="url(#s)"/>'
-            . '</g>'
-            . '<g fill="#fff" text-anchor="middle" font-family="Verdana,DejaVu Sans,Geneva,sans-serif" font-size="110" text-rendering="geometricPrecision">'
-            . '<text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">%s</text>'
-            . '<text x="%d" y="140" transform="scale(.1)">%s</text>'
-            . '<text x="%d" y="150" fill="#010101" fill-opacity=".3" transform="scale(.1)">%s</text>'
-            . '<text x="%d" y="140" transform="scale(.1)">%s</text>'
-            . '</g>'
-            . '</svg>',
+            self::TEMPLATE,
             $total,
             self::HEIGHT,
             $label,

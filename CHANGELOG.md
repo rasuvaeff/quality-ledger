@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+- Mutation testing now counts code the tests execute but do not name in `#[Covers]`
+  (`composer mutation` runs Infection with `--with-uncovered`, plus the signature-default
+  ignore and the visibility mutators switched off as in the package template); overall
+  MSI 89% -> about 98.4% against `minMsi` 98. Added tests for an unknown base run in
+  `diff()`, transitions recorded after the head run, a failed commit and a short write in
+  `LocalFileStorage` (the latter through a stream-wrapper double), and a warning-free read
+  of an unknown scope. Behaviour-neutral source change: the `BadgeSvg` template is one
+  string constant instead of a concatenation (identical output).
+
 ## 0.2.0 — 2026-08-21
 
 - Badges: `Badge` (label, message, colour), `BadgeColor` (the six-step

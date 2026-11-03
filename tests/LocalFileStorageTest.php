@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Rasuvaeff\QualityLedger\Tests;
 
 use Rasuvaeff\QualityLedger\LocalFileStorage;
+use Rasuvaeff\QualityLedger\Tests\Support\ShortWriteWrapper;
 use Testo\Assert;
 use Testo\Codecov\Covers;
 use Testo\Lifecycle\AfterTest;
@@ -175,6 +176,76 @@ final class LocalFileStorageTest
             Assert::same(file_get_contents($victim), 'original');
         } finally {
             @unlink($tmp);
+        }
+    }
+
+    /**
+     * A temp file that cannot be moved into place is an error, and it must not
+     * be left behind. A non-empty directory standing at the target path makes
+     * `rename()` fail without needing any special privilege.
+     */
+    public function aFailedCommitIsReportedAndLeavesNoTempFile(): void
+    {
+        if (\DIRECTORY_SEPARATOR === '\\') {
+            return;
+        }
+
+        mkdir($this->dir, 0o755, recursive: true);
+        $target = $this->dir . '/' . hash('sha256', 'acme/widgets') . '.json';
+        mkdir($target);
+        file_put_contents($target . '/keep', 'x');
+
+        try {
+            (new LocalFileStorage($this->dir))->write('acme/widgets', '{}');
+            Assert::fail('expected a RuntimeException');
+        } catch (\RuntimeException $e) {
+            Assert::same($e->getMessage(), 'Could not commit the ledger for scope "acme/widgets"');
+        } finally {
+            unlink($target . '/keep');
+            rmdir($target);
+        }
+
+        Assert::same(glob($this->dir . '/.*.tmp') ?: [], []);
+    }
+
+    /**
+     * Reading a scope that was never written is an ordinary answer, not an
+     * event worth a PHP warning in the host application's logs.
+     */
+    public function readingAnUnknownScopeRaisesNoWarning(): void
+    {
+        $raised = [];
+        set_error_handler(static function (int $level, string $message) use (&$raised): bool {
+            $raised[] = $message;
+
+            return true;
+        });
+
+        try {
+            $result = (new LocalFileStorage($this->dir))->read('acme/widgets');
+        } finally {
+            restore_error_handler();
+        }
+
+        Assert::null($result);
+        Assert::same($raised, []);
+    }
+
+    /**
+     * A write the filesystem only half accepts must not be committed as the
+     * ledger: a truncated JSON document would be read back as corruption.
+     */
+    public function aShortWriteIsReportedInsteadOfCommitted(): void
+    {
+        ShortWriteWrapper::register();
+
+        try {
+            (new LocalFileStorage(ShortWriteWrapper::PROTOCOL . '://ledger'))->write('acme/widgets', '{"runs":[]}');
+            Assert::fail('expected a RuntimeException');
+        } catch (\RuntimeException $e) {
+            Assert::same($e->getMessage(), 'Short write while saving the ledger for scope "acme/widgets"');
+        } finally {
+            ShortWriteWrapper::unregister();
         }
     }
 }
