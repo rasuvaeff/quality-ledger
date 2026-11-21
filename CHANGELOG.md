@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `LocalFileStorage` (the latter through a stream-wrapper double), and a warning-free read
   of an unknown scope. Behaviour-neutral source change: the `BadgeSvg` template is one
   string constant instead of a concatenation (identical output).
+- **Changed:** PHP 8.6 is supported: the `php` constraint is widened to
+  `8.3 - 8.6` (#8). CI runs PHP 8.6 as a regular matrix entry; the
+  backward-compatibility job runs on PHP 8.5.
 
 ## 0.2.0 — 2026-08-21
 

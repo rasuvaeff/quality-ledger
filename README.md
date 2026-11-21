@@ -34,7 +34,7 @@ up to the caller.
 
 ## Requirements
 
-- PHP 8.3–8.5
+- PHP 8.3–8.6
 - No runtime dependencies
 
 ## Installation
